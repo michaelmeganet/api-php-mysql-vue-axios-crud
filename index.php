@@ -39,6 +39,7 @@
       </div>
       <div class="col-md-6" align="right">
        <input type="button" class="btn btn-success btn-xs" @click="openModel" value="Add" />
+       <input type="button" class="btn btn-success btn-xs" @click="openModel2" value="GetRunno" />
       </div>
      </div>
     </div>
@@ -46,16 +47,18 @@
      <div class="table-responsive">
       <table class="table table-bordered table-striped">
        <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
+        <th>Instance ID</th>
+        <th>Serial No</th>
         <th>Edit</th>
         <th>Delete</th>
+        <th>Generate Running no</th>
        </tr>
        <tr v-for="row in allData">
-        <td>{{ row.first_name }}</td>
-        <td>{{ row.last_name }}</td>
-        <td><button type="button" name="edit" class="btn btn-primary btn-xs edit" @click="fetchData(row.id)">Edit</button></td>
-        <td><button type="button" name="delete" class="btn btn-danger btn-xs delete" @click="deleteData(row.id)">Delete</button></td>
+        <td>{{ row.instanceid }}</td>
+        <td>{{ row.serialno }}</td>
+        <td><button type="button" name="edit" class="btn btn-primary btn-xs edit" @click="fetchData(row.sid)">Edit</button></td>
+        <td><button type="button" name="delete" class="btn btn-danger btn-xs delete" @click="deleteData(row.sid)">Delete</button></td>
+        <td><button type="button" name="getrunno" class="btn btn-danger btn-xs delete" @click="genRunnoData(row.sid)">Gen runno</button></td>
        </tr>
       </table>
      </div>
@@ -73,12 +76,12 @@
          </div>
          <div class="modal-body">
           <div class="form-group">
-           <label>Enter First Name</label>
-           <input type="text" class="form-control" v-model="first_name" />
+           <label>Enter Instance ID</label>
+           <input type="text" class="form-control" v-model="instanceid"  />
           </div>
           <div class="form-group">
-           <label>Enter Last Name</label>
-           <input type="text" class="form-control" v-model="last_name" />
+           <label>Enter Running no</label>
+           <input type="text" class="form-control" v-model="serialno"  />
           </div>
           <br />
           <div align="center">
@@ -105,6 +108,10 @@ var application = new Vue({
   myModel:false,
   actionButton:'Insert',
   dynamicTitle:'Add Data',
+  genRunnoTitle:'Generate running no',
+  userid:'',
+  instanceid:'',
+  serialno:'',
  },
  methods:{
   fetchAllData:function(){
@@ -115,42 +122,83 @@ var application = new Vue({
    });
   },
   openModel:function(){
-   application.first_name = '';
-   application.last_name = '';
+   application.instanceid = '';
+   application.serialno= '';
    application.actionButton = "Insert";
    application.dynamicTitle = "Add Data";
+   application.genRunnoTitle = "Generate running no";
+   application.userid = "cct3000";
    application.myModel = true;
   },
+  openModel2:function(){
+
+    application.instanceid = this.instanceid;
+    application.serialno = this.serialno;
+    application.sid = this.sid;
+    application.userid = this.userid;
+    application.myModel = true;
+    application.dynamicTitle = "Generate running no";
+   application.actionButton = "GenRunno";
+   application.genRunnoTitle = "Generate running no";
+   },
+//    application.instanceid = '';
+//    application.serialno= '';
+//    application.dynamicTitle = "Generate running no";
+//    application.actionButton = "GenRunno";
+//    application.genRunnoTitle = "Generate running no";
+//    application.myModel = true;      
+    
   submitData:function(){
-   if(application.first_name != '' && application.last_name != '')
+   if(application.instanceid != '' && application.serialno != '')
    {
     if(application.actionButton == 'Insert')
     {
      axios.post('action.php', {
       action:'insert',
-      firstName:application.first_name, 
-      lastName:application.last_name
+      instanceid:application.instanceid, 
+      serialno:application.serialno
      }).then(function(response){
       application.myModel = false;
       application.fetchAllData();
-      application.first_name = '';
-      application.last_name = '';
+      //application.instanceid = '';
+      //application.serialno = '';
       alert(response.data.message);
      });
     }
+    if(application.actionButton == 'GenRunno')
+    {
+        // userid = this.userid;
+        // serialno = this.serialno;
+        // instanceid = this.instanceid;
+     axios.post('action.php', {
+      action:'genrunno',
+      instanceid:application.instanceid, 
+      serialno:application.serialno,
+      userid: application.userid
+    //   instanceid:application.instanceid, 
+    //   serialno:application.serialno,
+
+     }).then(function(response){
+      application.myModel = false;
+      application.fetchAllData();
+      //application.instanceid = '';
+      //application.serialno = '';
+      alert(response.data.message);
+     });
+    }    
     if(application.actionButton == 'Update')
     {
      axios.post('action.php', {
       action:'update',
-      firstName : application.first_name,
-      lastName : application.last_name,
-      hiddenId : application.hiddenId
+      instanceid:application.instanceid, 
+      serialno:application.serialno,
+      sid : application.sid
      }).then(function(response){
       application.myModel = false;
       application.fetchAllData();
-      application.first_name = '';
-      application.last_name = '';
-      application.hiddenId = '';
+     // application.instanceid = '';
+      //application.serialno = '';
+      //application.sid = '';
       alert(response.data.message);
      });
     }
@@ -160,25 +208,39 @@ var application = new Vue({
     alert("Fill All Field");
    }
   },
-  fetchData:function(id){
+  genRunnoData:function(sid){
+    axios.post('action.php', {
+    action:'fetchSingle',
+    sid:sid
+   }).then(function(response){
+    application.instanceid = response.data.instanceid;
+    application.serialno = response.data.serialno;
+    application.sid = response.data.sid;
+    application.myModel = true;
+    application.actionButton = 'GenRunno';
+    application.dynamicTitle = 'Generate running no';
+   });      
+      
+  },
+  fetchData:function(sid){
    axios.post('action.php', {
     action:'fetchSingle',
-    id:id
+    sid:sid
    }).then(function(response){
-    application.first_name = response.data.first_name;
-    application.last_name = response.data.last_name;
-    application.hiddenId = response.data.id;
+    application.instanceid = response.data.instanceid;
+    application.serialno = response.data.serialno;
+    application.sid = response.data.sid;
     application.myModel = true;
     application.actionButton = 'Update';
     application.dynamicTitle = 'Edit Data';
    });
   },
-  deleteData:function(id){
+  deleteData:function(sid){
    if(confirm("Are you sure you want to remove this data?"))
    {
     axios.post('action.php', {
      action:'delete',
-     id:id
+     sid:sid
     }).then(function(response){
      application.fetchAllData();
      alert(response.data.message);
@@ -186,6 +248,18 @@ var application = new Vue({
    }
   }
  },
+ beforeMount: function () {
+        params = new URLSearchParams(location.search);
+        this.instanceid = params.post('instanceid');
+        this.userid = params.post('userid');
+        this.serialno = params.post('serialno');
+        
+    },
+    mounted: function(){
+        console.log(this.instanceid);
+        console.log(this.serialno);
+        console.log(this.userid);
+    },
  created:function(){
   this.fetchAllData();
  }
