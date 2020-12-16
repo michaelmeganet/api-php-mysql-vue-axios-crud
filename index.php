@@ -85,7 +85,7 @@
           </div>
           <br />
           <div align="center">
-           <input type="hidden" v-model="hiddenId" />
+           
            <input type="button" class="btn btn-success btn-xs" v-model="actionButton" @click="submitData" />
           </div>
          </div>
